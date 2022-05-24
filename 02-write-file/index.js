@@ -21,21 +21,34 @@ const readline = require('readline').createInterface({
 
 // writeInFile('aga')
 
+// async function wrtieTextInFile () {
 
-  
-//   readline.question('Who are you?', name => {
-//     console.log(`Hey there ${name}!`);
-//     readline.close();
-//   });
+// }
+
+
 let data = ''
 async function writeInFile () {
     try {
-        console.log(`YPA`)
+        // console.log(`YPA`)
         data = ' some text'
         await fs.writeFile(__dirname + '/text.txt', 'Greeting' + data, { flag: 'a+'})
-        await readline.question('Hey', greeting => {
+        await readline.question('Hey ', greeting => {
             console.log(`${greeting}`)
-            fs.writeFile(__dirname + '/text.txt', `${greeting}`, { flag: 'a+'})
+            if (greeting == 'exit') {
+                readline.close()
+            } else {
+                fs.writeFile(__dirname + '/text.txt', `${greeting}`, { flag: 'a+'})
+            }
+            
+        })
+        await readline.on('line', input => {
+            if (input == 'exit') {
+                readline.close()
+            } else {
+                fs.appendFile(__dirname + '/text.txt', ' ' + input, function (err) {
+                    if (err) throw err
+                })
+            }
         })
         // await fs.writeFile(__dirname + '/text.txt', 'Greeting' + data, { flag: 'a+'})
 
