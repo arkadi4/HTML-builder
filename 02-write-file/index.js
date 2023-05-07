@@ -1,22 +1,22 @@
-const fs = require('fs')
-const path = require('path')
-const { stdin: input, stdout: output } = require('process');
+const process = require('process');
+const fs = require('fs');
+const path = require('path');
 const readline = require('readline');
-const rl = readline.createInterface({ input, output });
-const pathToText = path.join(__dirname, 'text.txt')
-const writeStream = fs.createWriteStream(pathToText)
-console.log('HEY')
 
-rl.question('Write smth \n', (answer) => {
-    writeStream.write(`${answer}`)
-})
-rl.on('line', (xxx) => {
-    if (xxx == 'exit') {
-        rl.close()
-    } else {
-        writeStream.write('\n' + `${xxx}`)
-    }
-})
+console.log('Hello, write something');
+const pathToTextFile = path.join(__dirname, 'textFile.txt');
+const writeStreamToFile = fs.createWriteStream(pathToTextFile);
+
+const rl = readline.createInterface(process.stdin, process.stdout);
+rl.on('line', (input) => {
+  // console.log(input);
+  if (input === 'exit') {
+    console.log('have a good day');
+    rl.close();
+  } else {
+    writeStreamToFile.write(`${input}\n`);
+  }
+});
 rl.on('close', () => {
-    console.log("BYE")
-})
+  console.log('have a good day');
+});
