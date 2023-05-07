@@ -18,15 +18,9 @@ const asyncReadTemplate = async () => {
     let templateDataWithReplacements = templateData;
     for (let matchLine of matchLineArray) {
       let tagName = matchLine.match(/\w{1,}/);
-      // console.log('tagName', tagName, tagName[0]);
       let pathToComponentFile = path.join(__dirname, 'components', `${tagName[0]}.html`);
-      console.log('pathToComponentFile', pathToComponentFile);
       let componentData = await fsPromise.readFile(pathToComponentFile, {encoding: 'utf-8'});
-      // console.log('componentData', componentData);
-      console.log('matchLine', matchLine);
-      // templateDataWithReplacements.replace(matchLine, componentData);
       templateDataWithReplacements = templateDataWithReplacements.replace(matchLine, componentData);
-      console.log('templateData', templateDataWithReplacements);
     }
     await fsPromise.writeFile(pathToProjectDistIndexHtml, templateDataWithReplacements);
   } catch (error) {
@@ -35,105 +29,43 @@ const asyncReadTemplate = async () => {
 };
 asyncReadTemplate();
 
+async function makeBundle () {
+  const pathToFolder = path.join(__dirname, 'styles');  
+  const pathToBundle = path.join(__dirname, 'project-dist', 'style.css');
+  const filesInFolder =  await fsPromise.readdir(pathToFolder);
+  let writeStream = fs.createWriteStream(pathToBundle);
+  for (let file of filesInFolder ) {
+    if (path.extname(file) === '.css') {
+      let pathToFile = path.join(pathToFolder, file);
+      fs.createReadStream(pathToFile, 'utf8').on('data',  (chunk) => {              
+        writeStream.write(chunk);
+      });
+    }
+  }
+}
+makeBundle();
 
-
-// const readTempData = async () => {
-//   try {
-//     await asyncReadTemplate();
-//     console.log('tempData', typeof tempData);
-//   } catch (error) {
-//     console.error(error);
-//   }
-// };
-// readTempData();
-
-// const pathToProjectDistIndexHtml = path.join(__dirname, 'project-dist', 'index.html');
-
-// const readFromTemplate = fs.createReadStream(pathToTemplate);
-// const writeToHtmlStream = fs.createWriteStream(pathToProjectDistIndexHtml);
-// const rl = readline.createInterface(readFromTemplate);
-
-// let templateData;
-// fs.readFile(pathToTemplate, {encoding: 'utf-8'}, (error, data) => {
-//   try {
-//     templateData = data;
-//     console.log('templateData', templateData);
-//     let matchLineArray = templateData.match(/{{\w{1,}}}/g);
-//     console.log('matchLine', matchLineArray);
-//     for (let matchLine of matchLineArray) {
-//       let tagName = matchLine.match(/\w{1,}/);
-//       console.log('tagName', tagName, tagName[0]);
-//       let pathToComponentFile = path.join(__dirname, 'components', `${tagName[0]}.html`);
-//       console.log('pathToComponentFile', pathToComponentFile);
-//       fs.readFile(pathToComponentFile, {encoding: 'utf-8'}, (componentData, error) => {
-//         try {
-//           console.log('componentData', componentData);
-//         } catch {
-//           console.log(error);
-//         }
-//       });
-//     }
-// if (matchLine) {
-// let tagName = matchLine.match(/\w{1,}/);
-// console.log('matchLine', matchLine, matchLine[0]);
-// console.log('tagName', tagName, tagName[0]);
-// let pathToComponentFile = path.join(__dirname, 'components', `${tagName[0]}.html`);
-// console.log('pathToComponentFile', pathToComponentFile);
-// let readStreamFromComponent = fs.createReadStream(pathToComponentFile);
-// readStreamFromComponent.on('data', chunk => {
-//   // writeToHtmlStream.write(chunk);
-//   console.log('chunk', chunk.toString());
-// });
-// } else {
-// writeToHtmlStream.write(`${line}\n`);
-// console.log('line', line);
-// }
-//   } catch {
-//     console.error(error);
-//   }
-// });
-
-// const asyncFindTagNames = async () => {
-//   await console.log('templateData', templateData);
-// };
-// asyncFindTagNames();
-
-
-
-
-
-
-// let templateData;
-// const asyncReadFromTemplate = async () => {
-//   try {
-//     let templateData = await fsPromise.readFile(pathToTemplate, {encoding: 'utf-8'});
-//     console.log('templateData in func', templateData);
-//     return templateData;
-//   } catch (err) {
-//     console.error(err);
-//   }
-// };
-// asyncReadFromTemplate();
-
-// rl.on('line', (line) => {
-//   // console.log('line', line);
-//   // if (line.includes('{{')) {
-//   //   console.log('YPPPPPPPPPPPPPPPPPPPPPPPPPPPA');
-//   // }
-//   let matchLine = line.match(/{{\w{1,}}}/);
-//   if (matchLine) {
-//     let tagName = line.match(/\w{1,}/);
-//     // console.log('matchLine', matchLine, matchLine[0]);
-//     // console.log('tagName', tagName, tagName[0]);
-//     let pathToComponentFile = path.join(__dirname, 'components', `${tagName[0]}.html`);
-//     // console.log('pathToComponentFile', pathToComponentFile);
-//     let readStreamFromComponent = fs.createReadStream(pathToComponentFile);
-//     readStreamFromComponent.on('data', chunk => {
-//       writeToHtmlStream.write(chunk);
-//       console.log('chunk', chunk.toString());
-//     });
-//   } else {
-//     writeToHtmlStream.write(`${line}\n`);
-//     console.log('line', line);
-//   }
-// });
+async function copyDir () {
+  const pathToFolder = path.join(__dirname, 'assets');
+  const pathToCopyFolder = path.join(__dirname, 'project-dist', 'assets');
+  fs.mkdir(pathToCopyFolder, { recursive: true}, (err) => {
+    if (err) throw err;
+  });
+  const foldersInFolder =  await fsPromise.readdir(pathToFolder);
+  for (let folder of foldersInFolder) {
+    let pathToCopyAssetsFolder = path.join(pathToCopyFolder, folder);
+    fs.mkdir(pathToCopyAssetsFolder, { recursive: true}, (err) => {
+      if (err) throw err;
+    });
+    let pathToFolderInAssetsFolder = path.join(pathToFolder, folder);
+    let filesInFolder = await fsPromise.readdir(pathToFolderInAssetsFolder);
+    for (let file of filesInFolder) {
+      try {
+        await fsPromise.copyFile(path.join(pathToFolderInAssetsFolder, file), path.join(pathToCopyAssetsFolder, file));
+      } catch (error) {
+        console.error('Error');
+      }
+    }
+  }
+}
+copyDir();
